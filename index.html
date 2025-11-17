@@ -1,1 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task Manager - Add Tasks</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Task Manager</h1>
+    <nav>
+      <a href="index.html">Add Tasks</a> |
+      <a href="tasks.html">View Tasks</a>
+    </nav>
+  </header>
+
+  <section id="task-input">
+    <h2>Add a Task</h2>
+    <form id="taskForm">
+      <input type="text" id="taskTitle" placeholder="Task Title" required>
+      <input type="text" id="taskDesc" placeholder="Task Description" required>
+      <input type="datetime-local" id="taskDue" required>
+      <button type="submit">Add Task</button>
+    </form>
+  </section>
+
+  <section id="recent-tasks">
+    <h2>Recent Tasks</h2>
+    <ul id="recentTasksDisplay"></ul>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
 
