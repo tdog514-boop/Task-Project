@@ -147,3 +147,13 @@ window.completeTask = function(index) {
   if (document.getElementById("waitlistDisplay")) displayTasksPage();
   if (document.getElementById("completedTasksDisplay")) displayCompletedTasks();
 };
+
+window.restoreTask = function(index) {
+  const completed = getCompletedTasks();
+  const tasks = getTasks();
+  const [restored] = completed.splice(index, 1);
+  tasks.unshift(restored);
+  saveCompletedTasks(completed);
+  saveTasks(tasks);
+  displayCompletedTasks();
+};
