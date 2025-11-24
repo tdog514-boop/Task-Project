@@ -1,9 +1,14 @@
 function getTasks() {
   return JSON.parse(localStorage.getItem("tasks")) || [];
 }
-
 function saveTasks(tasks) {
   localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+function getCompletedTasks() {
+  return JSON.parse(localStorage.getItem("completedTasks")) || [];
+}
+function saveCompletedTasks(tasks) {
+  localStorage.setItem("completedTasks", JSON.stringify(tasks));
 }
 
 if (document.getElementById("taskForm")) {
@@ -33,7 +38,10 @@ if (document.getElementById("taskForm")) {
           <strong>${task.title}</strong> - ${task.desc}<br>
           Due: ${new Date(task.due).toLocaleString()}
         </div>
-        <button onclick="removeTask(${index})">Remove</button>
+        <div>
+          <button onclick="removeTask(${index})">Remove</button>
+          <button onclick="completeTask(${index})">Complete</button>
+        </div>
       `;
       list.appendChild(li);
     });
@@ -48,7 +56,6 @@ if (document.getElementById("taskForm")) {
 
   displayRecentTasks();
 }
-
 
 if (document.getElementById("nextTaskDisplay")) {
   function displayTasksPage() {
@@ -75,7 +82,10 @@ if (document.getElementById("nextTaskDisplay")) {
             <strong>${task.title}</strong> - ${task.desc}<br>
             Due: ${new Date(task.due).toLocaleString()}
           </div>
-          <button onclick="removeTask(${index})">Remove</button>
+          <div>
+            <button onclick="removeTask(${index})">Remove</button>
+            <button onclick="completeTask(${index})">Complete</button>
+          </div>
         `;
         waitlistDisplay.appendChild(li);
       });
@@ -91,3 +101,49 @@ if (document.getElementById("nextTaskDisplay")) {
 
   displayTasksPage();
 }
+
+if (document.getElementById("completedTasksDisplay")) {
+  function displayCompletedTasks() {
+    const tasks = getCompletedTasks();
+    const list = document.getElementById("completedTasksDisplay");
+    list.innerHTML = "";
+
+    tasks.forEach((task, index) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div>
+          <strong>${task.title}</strong> - ${task.desc}<br>
+          Completed: ${new Date(task.due).toLocaleString()}
+        </div>
+        <div>
+          <button onclick="removeCompletedTask(${index})">Remove</button>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  window.removeCompletedTask = function(index) {
+    const tasks = getCompletedTasks();
+    tasks.splice(index, 1);
+    saveCompletedTasks(tasks);
+    displayCompletedTasks();
+  };
+
+  displayCompletedTasks();
+}
+
+window.completeTask = function(index) {
+  const tasks = getTasks();
+  const completed = getCompletedTasks();
+
+  const [done] = tasks.splice(index, 1);
+  completed.unshift(done);
+
+  saveTasks(tasks);
+  saveCompletedTasks(completed);
+
+  if (document.getElementById("recentTasksDisplay")) displayRecentTasks();
+  if (document.getElementById("waitlistDisplay")) displayTasksPage();
+  if (document.getElementById("completedTasksDisplay")) displayCompletedTasks();
+};
