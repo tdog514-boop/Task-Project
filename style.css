@@ -48,10 +48,4 @@ ul {
 
 li {
   margin: 8px 0;
-  padding: 8px;
-  background: #e9f2ff;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
