@@ -1,3 +1,7 @@
+// ---------- UTIL: LOG ----------
+const log = (...args) => { try { console.log(...args); } catch {} };
+
+// ---------- LOCAL STORAGE HELPERS ----------
 function getTasks() {
   return JSON.parse(localStorage.getItem("tasks")) || [];
 }
@@ -11,175 +15,187 @@ function saveCompletedTasks(tasks) {
   localStorage.setItem("completedTasks", JSON.stringify(tasks));
 }
 
-if (document.getElementById("taskForm")) {
-  const form = document.getElementById("taskForm");
+// ---------- DATA NORMALIZATION ----------
+function normalizeTasks() {
+  // Add missing ids and remove invalid entries
+  const tasks = getTasks()
+    .filter(t => t && typeof t === "object") // drop nulls
+    .map(t => {
+      if (!t.id) t.id = Date.now() + Math.floor(Math.random() * 1000000);
+      return t;
+    });
+  saveTasks(tasks);
+
+  const completed = getCompletedTasks()
+    .filter(t => t && typeof t === "object")
+    .map(t => {
+      if (!t.id) t.id = Date.now() + Math.floor(Math.random() * 1000000);
+      return t;
+    });
+  saveCompletedTasks(completed);
+}
+normalizeTasks();
+
+// ---------- SAFE RENDER HELPERS ----------
+function safeRender(elementId, renderFn) {
+  const el = document.getElementById(elementId);
+  if (!el) return false;
+  try { renderFn(el); } catch (e) { log("Render error for", elementId, e); }
+  return true;
+}
+
+// ---------- UNIVERSAL ACTIONS (by id) ----------
+function removeTaskById(id) {
+  const tasks = getTasks();
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  tasks.splice(idx, 1);
+  saveTasks(tasks);
+  // Re-render only if elements exist (no crashes on other pages)
+  safeRender("nextTaskDisplay", () => displayTasksPage());
+  safeRender("completedTasksDisplay", () => displayCompletedTasks());
+}
+
+function completeTaskById(id) {
+  const tasks = getTasks();
+  const completed = getCompletedTasks();
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  const [task] = tasks.splice(idx, 1);
+  completed.unshift(task);
+  saveTasks(tasks);
+  saveCompletedTasks(completed);
+
+  safeRender("nextTaskDisplay", () => displayTasksPage());
+  safeRender("completedTasksDisplay", () => displayCompletedTasks());
+
+  // Navigate to Completed page after completing
+  window.location.href = "page3.html";
+}
+
+function removeCompletedTaskById(id) {
+  const tasks = getCompletedTasks();
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  tasks.splice(idx, 1);
+  saveCompletedTasks(tasks);
+  safeRender("completedTasksDisplay", () => displayCompletedTasks());
+}
+
+// ---------- PAGE 1: ADD TASK ----------
+safeRender("taskForm", (form) => {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const title = document.getElementById("taskTitle").value;
-    const desc = document.getElementById("taskDesc").value;
+    const title = document.getElementById("taskTitle").value.trim();
+    const desc = document.getElementById("taskDesc").value.trim();
     const due = document.getElementById("taskDue").value;
 
-    const tasks = getTasks();
-    tasks.unshift({ title, desc, due }); // newest first
-    saveTasks(tasks);
-    form.reset();
-    displayRecentTasks();
-  });
-
-  function displayRecentTasks() {
-    const tasks = getTasks();
-    const list = document.getElementById("recentTasksDisplay");
-    list.innerHTML = "";
-
-    tasks.forEach((task, index) => {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <div>
-          <strong>${task.title}</strong> - ${task.desc}<br>
-          Due: ${new Date(task.due).toLocaleString()}
-        </div>
-        <div>
-          <button onclick="removeTask(${index})">Remove</button>
-          <button onclick="completeTask(${index})">Complete</button>
-        </div>
-      `;
-      list.appendChild(li);
-    });
-  }
-
-  window.removeTask = function(index) {
-    const tasks = getTasks();
-    tasks.splice(index, 1);
-    saveTasks(tasks);
-    displayRecentTasks();
-  };
-
-  displayRecentTasks();
-}
-
-if (document.getElementById("nextTaskDisplay")) {
-  function displayTasksPage() {
-    const tasks = getTasks();
-    const nextDisplay = document.getElementById("nextTaskDisplay");
-    const waitlistDisplay = document.getElementById("waitlistDisplay");
-
-    nextDisplay.innerHTML = "";
-    waitlistDisplay.innerHTML = "";
-
-    if (tasks.length > 0) {
-      const sortedByDue = [...tasks].sort((a, b) => new Date(a.due) - new Date(b.due));
-      const next = sortedByDue[0];
-
-      nextDisplay.innerHTML = `
-        <strong>${next.title}</strong> - ${next.desc}<br>
-        Due: ${new Date(next.due).toLocaleString()}
-      `;
-
-      tasks.forEach((task, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <div>
-            <strong>${task.title}</strong> - ${task.desc}<br>
-            Due: ${new Date(task.due).toLocaleString()}
-          </div>
-          <div>
-            <button onclick="removeTask(${index})">Remove</button>
-            <button onclick="completeTask(${index})">Complete</button>
-          </div>
-        `;
-        waitlistDisplay.appendChild(li);
-      });
+    if (!title || !desc || !due) {
+      alert("Please fill in title, description, and due date.");
+      return;
     }
-  }
 
-  window.removeTask = function(index) {
     const tasks = getTasks();
-    tasks.splice(index, 1);
+    const id = Date.now() + Math.floor(Math.random() * 1000000);
+    tasks.push({ id, title, desc, due });
     saveTasks(tasks);
-    displayTasksPage();
-  };
 
-  displayTasksPage();
-}
+    form.reset();
+    window.location.href = "page2.html";
+  });
+});
 
-if (document.getElementById("completedTasksDisplay")) {
-  function displayCompletedTasks() {
-    const tasks = getCompletedTasks();
-    const list = document.getElementById("completedTasksDisplay");
-    list.innerHTML = "";
+// ---------- PAGE 2: VIEW TASKS ----------
+function displayTasksPage() {
+  const nextDisplay = document.getElementById("nextTaskDisplay");
+  const waitlistDisplay = document.getElementById("waitlistDisplay");
+  if (!nextDisplay || !waitlistDisplay) return;
 
-    tasks.forEach((task, index) => {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <div>
-          <strong>${task.title}</strong> - ${task.desc}<br>
-          Completed: ${new Date(task.due).toLocaleString()}
-        </div>
-        <div>
-          <button onclick="removeCompletedTask(${index})">Remove</button>
-        </div>
-      `;
-      list.appendChild(li);
-    });
+  // Clean and prepare tasks
+  let tasks = getTasks()
+    .filter(t => t && t.title && t.desc && t.due); // drop invalid rows
+
+  nextDisplay.innerHTML = "";
+  waitlistDisplay.innerHTML = "";
+
+  if (tasks.length === 0) {
+    nextDisplay.innerHTML = "<em>No tasks yet</em>";
+    return;
   }
 
-  window.removeCompletedTask = function(index) {
-    const tasks = getCompletedTasks();
-    tasks.splice(index, 1);
-    saveCompletedTasks(tasks);
-    displayCompletedTasks();
-  };
+  // Sort by due date ascending
+  const sorted = [...tasks].sort((a, b) => new Date(a.due) - new Date(b.due));
+  const now = new Date();
 
-  displayCompletedTasks();
-}
+  // Next due task
+  const next = sorted[0];
+  const nextDue = new Date(next.due);
+  let nextClass = "later";
+  if (nextDue < now) nextClass = "overdue";
+  else if ((nextDue - now) / (1000 * 60 * 60 * 24) <= 2) nextClass = "upcoming";
 
-window.completeTask = function(index) {
-  const tasks = getTasks();
-  const completed = getCompletedTasks();
-
-  const [done] = tasks.splice(index, 1);
-  completed.unshift(done);
-
-  saveTasks(tasks);
-  saveCompletedTasks(completed);
-
-  if (document.getElementById("recentTasksDisplay")) displayRecentTasks();
-  if (document.getElementById("waitlistDisplay")) displayTasksPage();
-  if (document.getElementById("completedTasksDisplay")) displayCompletedTasks();
-};
-
-window.restoreTask = function(index) {
-  const completed = getCompletedTasks();
-  const tasks = getTasks();
-  const [restored] = completed.splice(index, 1);
-  tasks.unshift(restored);
-  saveCompletedTasks(completed);
-  saveTasks(tasks);
-  displayCompletedTasks();
-};
-
-function animateTask(li) {
-  li.style.opacity = 0;
-  li.style.transform = "translateY(10px)";
-  setTimeout(() => {
-    li.style.transition = "all 0.4s ease";
-    li.style.opacity = 1;
-    li.style.transform = "translateY(0)";
-  }, 50);
-}
-
-tasks.forEach((task, index) => {
-  const li = document.createElement("li");
-  li.innerHTML = `
-    <div>
-      <strong>${task.title}</strong> - ${task.desc}<br>
-      Due: ${new Date(task.due).toLocaleString()}
-    </div>
-    <div>
-      <button onclick="removeTask(${index})">Remove</button>
-      <button onclick="completeTask(${index})">Complete</button>
+  nextDisplay.innerHTML = `
+    <div class="${nextClass}">
+      <strong>${next.title}</strong><br>
+      ${next.desc}<br>
+      Due: ${nextDue.toLocaleString()}
     </div>
   `;
-  animateTask(li);
-  list.appendChild(li);
-});
+
+  // All upcoming tasks
+  sorted.forEach((task) => {
+    const dueDate = new Date(task.due);
+    let cssClass = "later";
+    if (dueDate < now) cssClass = "overdue";
+    else if ((dueDate - now) / (1000 * 60 * 60 * 24) <= 2) cssClass = "upcoming";
+
+    const li = document.createElement("li");
+    li.className = cssClass;
+    li.innerHTML = `
+      <div>
+        <strong>${task.title}</strong><br>
+        ${task.desc}<br>
+        Due: ${dueDate.toLocaleString()}
+      </div>
+      <div>
+        <button onclick="completeTaskById(${task.id})">Complete</button>
+        <button onclick="removeTaskById(${task.id})">Remove</button>
+      </div>
+    `;
+    waitlistDisplay.appendChild(li);
+  });
+}
+safeRender("nextTaskDisplay", () => displayTasksPage());
+
+// ---------- PAGE 3: COMPLETED TASKS ----------
+function displayCompletedTasks() {
+  const list = document.getElementById("completedTasksDisplay");
+  if (!list) return;
+
+  const tasks = getCompletedTasks()
+    .filter(t => t && t.title && t.desc && t.due);
+
+  list.innerHTML = "";
+
+  if (tasks.length === 0) {
+    list.innerHTML = "<li class='completed'><em>No completed tasks yet</em></li>";
+    return;
+  }
+
+  tasks.forEach((task) => {
+    const li = document.createElement("li");
+    li.className = "completed";
+    li.innerHTML = `
+      <div>
+        <strong>${task.title}</strong><br>
+        ${task.desc}<br>
+        Completed: ${new Date(task.due).toLocaleString()}
+      </div>
+      <div>
+        <button onclick="removeCompletedTaskById(${task.id})">Remove</button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+safeRender("completedTasksDisplay", () => displayCompletedTasks());
