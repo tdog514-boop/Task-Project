@@ -157,3 +157,29 @@ window.restoreTask = function(index) {
   saveTasks(tasks);
   displayCompletedTasks();
 };
+
+function animateTask(li) {
+  li.style.opacity = 0;
+  li.style.transform = "translateY(10px)";
+  setTimeout(() => {
+    li.style.transition = "all 0.4s ease";
+    li.style.opacity = 1;
+    li.style.transform = "translateY(0)";
+  }, 50);
+}
+
+tasks.forEach((task, index) => {
+  const li = document.createElement("li");
+  li.innerHTML = `
+    <div>
+      <strong>${task.title}</strong> - ${task.desc}<br>
+      Due: ${new Date(task.due).toLocaleString()}
+    </div>
+    <div>
+      <button onclick="removeTask(${index})">Remove</button>
+      <button onclick="completeTask(${index})">Complete</button>
+    </div>
+  `;
+  animateTask(li);
+  list.appendChild(li);
+});
