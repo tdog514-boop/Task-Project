@@ -1,51 +1,102 @@
+/* General page styling */
 body {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-  background: #f4f4f9;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
   color: #333;
 }
 
+/* Header and navigation */
 header {
   text-align: center;
-  margin-bottom: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 nav a {
-  margin: 0 10px;
+  margin: 0 15px;
   text-decoration: none;
   color: #0077cc;
+  font-weight: bold;
 }
 
+nav a:hover {
+  color: #005fa3;
+  text-decoration: underline;
+}
+
+/* Section cards */
 section {
-  margin-bottom: 30px;
-  padding: 15px;
+  margin: 20px auto;
+  padding: 20px;
+  max-width: 700px;
   background: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-h2 {
+/* Headings */
+h1, h2 {
   margin-top: 0;
+  color: #222;
 }
 
+/* Form inputs */
+input[type="text"], input[type="datetime-local"] {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+input:focus {
+  border-color: #0077cc;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0,119,204,0.5);
+}
+
+/* Buttons */
 button {
   background: #0077cc;
   color: white;
   border: none;
-  padding: 6px 10px;
+  padding: 10px 16px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
 
 button:hover {
   background: #005fa3;
+  transform: translateY(-2px);
 }
 
+button:active {
+  transform: scale(0.95);
+}
+
+/* Task lists */
 ul {
   list-style: none;
   padding: 0;
 }
 
 li {
-  margin: 8px 0;
+  margin: 12px 0;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+li strong {
+  color: #0077cc;
 }
